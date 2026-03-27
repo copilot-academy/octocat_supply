@@ -1,0 +1,71 @@
+name: 🐳 Build and Publish
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  build_api:
+    name: Build API
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    uses: octodemo/od-octocat-supply-workflows/.github/workflows/build-publish-containers.yml@main
+    if: |
+      github.actor != 'dependabot[bot]' && 
+      !startsWith(github.head_ref, 'dependabot/')
+    with:
+      service_name: api
+      context_path: ./api
+      dockerfile_path: ./api/Dockerfile
+      registry_url:  "ghcr.io"
+
+  build_frontend:
+    name: Build Frontend
+    permissions:
+      contents: read
+      packages: write
+      attestations: write
+      id-token: write
+    uses: octodemo/od-octocat-supply-workflows/.github/workflows/build-publish-containers.yml@main
+    if: |
+      github.actor != 'dependabot[bot]' && 
+      !startsWith(github.head_ref, 'dependabot/')
+    with:
+      service_name: frontend
+      context_path: ./frontend
+      dockerfile_path: ./frontend/Dockerfile
+      registry_url: "ghcr.io"
+
+
+  trigger_deploy:
+    name: Trigger Deployment
+    permissions:
+      actions: write
+    needs: [build_api, build_frontend]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    steps:
+      - name: Trigger deployment workflow
+        uses: actions/github-script@v8
+        with:
+          script: |
+            github.rest.actions.createWorkflowDispatch({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              workflow_id: 'deploy.yml',
+              ref: 'main',
+              inputs: {
+                'api_image': '${{ needs.build_api.outputs.image }}',
+                'api_digest': '${{ needs.build_api.outputs.digest }}',
+                'api_name': '${{ needs.build_api.outputs.name }}',
+                'frontend_image': '${{ needs.build_frontend.outputs.image }}',
+                'frontend_digest': '${{ needs.build_frontend.outputs.digest }}',
+                'frontend_name': '${{ needs.build_frontend.outputs.name }}'
+              }
+            });

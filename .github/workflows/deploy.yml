@@ -1,0 +1,56 @@
+name: 🚢 Deploy to Azure
+
+on:
+  workflow_dispatch:
+    inputs:
+      api_image:
+        description: 'API Container Image'
+        required: true
+        type: string
+      api_digest:
+        description: 'API Container Digest (sha256:...)'
+        required: true
+        type: string
+      api_name:
+        description: 'API Package Name'
+        required: true
+        type: string
+      frontend_image:
+        description: 'Frontend Container Image'
+        required: true
+        type: string
+      frontend_digest:
+        description: 'Frontend Container Digest (sha256:...)'
+        required: true
+        type: string
+      frontend_name:
+        description: 'Frontend Package Name'
+        required: true
+        type: string
+
+
+env:
+  AZURE_TENANT_ID: ${{ vars.AZURE_TENANT_ID }}
+  AZURE_SUBSCRIPTION_ID: ${{ vars.AZURE_SUBSCRIPTION_ID }}
+  AZURE_CLIENT_ID: ${{ vars.AZURE_CLIENT_ID }}
+  RESOURCE_GROUP_NAME: ${{ vars.AZURE_RESOURCE_GROUP_NAME }}
+  DEMO_INSTANCE_NAME: customer_workshop-laughing-rotary-phone
+  DEMO_SLUG: customer_workshop
+  GITHUB_HOSTNAME: "github.com"
+  REGISTRY_HOSTNAME: "ghcr.io"
+  REGISTRY_URL: "https://ghcr.io/${{ github.repository_owner }}"
+  ARTIFACT_URL: "https://github.com/${{ github.repository }}/pkgs/container"
+  CONTAINER_APP_ENVIRONMENT_NAME: 
+  CONTAINER_APP_ENVIRONMENT_ID: 
+
+
+jobs:
+  deploy:
+    name: Azure deployment disabled
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Deployment disabled
+        run: echo "Azure deployment was disabled in demo creation"
+        shell: bash
+

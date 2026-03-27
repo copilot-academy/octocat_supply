@@ -1,0 +1,39 @@
+{
+  "version": 1,
+  "hooks": {
+    "sessionStart": [
+      {
+        "type": "command",
+        "bash": "echo \"[$(date)] Session started\" >> .agent.log",
+        "powershell": "Add-Content -Path .agent.log -Value \"[$(Get-Date)] Session started\"",
+        "cwd": ".",
+        "timeoutSec": 10
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "type": "command",
+        "bash": "echo \"[$(date)] Prompt used: $(cat | jq -r '.prompt')\" >> .agent.log",
+        "powershell": "$input | ConvertFrom-Json | ForEach-Object { Add-Content -Path .agent.log -Value \"[$(Get-Date)] Prompt used: $($_.prompt)\" }",
+        "cwd": ".",
+        "timeoutSec": 30
+      }
+    ],
+    "Stop": [
+      {
+        "type": "command",
+        "bash": "echo \"[$(date)] Session stopped\" >> .agent.log",
+        "powershell": "Add-Content -Path .agent.log -Value \"[$(Get-Date)] Session stopped\"",
+        "cwd": ".",
+        "timeoutSec": 10
+      },
+      // comment this in if you want automatic commits after each agent session
+      // {
+      //   "type": "command",
+      //   "bash": ".github/hooks/checkpoint-commit.sh",
+      //   "cwd": ".",
+      //   "timeoutSec": 10
+      // }
+    ]
+  }
+}

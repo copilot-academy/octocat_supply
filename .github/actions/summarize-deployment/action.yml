@@ -1,0 +1,161 @@
+name: "Summarize Deployment"
+description: "Extracts deployment outputs and creates a comprehensive Actions summary for Azure Container Apps deployment"
+
+inputs:
+  deployment-outputs-file:
+    description: "Path to the bicep deployment outputs JSON file"
+    required: true
+  api-image:
+    description: "API container image reference"
+    required: true
+  frontend-image:
+    description: "Frontend container image reference"
+    required: true
+  api-digest:
+    description: "API container digest (sha256:...)"
+    required: true
+  frontend-digest:
+    description: "Frontend container digest (sha256:...)"
+    required: true
+  api-name:
+    description: "API package name"
+    required: true
+  frontend-name:
+    description: "Frontend package name"
+    required: true
+  resource-group:
+    description: "Azure resource group name"
+    required: true
+  gh-token:
+    description: "GitHub token for API access"
+    required: true
+
+outputs:
+  api_url:
+    description: "API application URL"
+    value: ${{ steps.extract.outputs.api_url }}
+  frontend_url:
+    description: "Frontend application URL"
+    value: ${{ steps.extract.outputs.frontend_url }}
+  api_app_name:
+    description: "API Container App name"
+    value: ${{ steps.extract.outputs.api_app_name }}
+  frontend_app_name:
+    description: "Frontend Container App name"
+    value: ${{ steps.extract.outputs.frontend_app_name }}
+  location:
+    description: "Azure deployment location"
+    value: ${{ steps.extract.outputs.location }}
+
+runs:
+  using: "composite"
+  steps:
+    - name: Extract Deployment Outputs and Generate Summary
+      id: extract
+      uses: actions/github-script@v7
+      env:
+        DEPLOYMENT_OUTPUTS_FILE: ${{ inputs.deployment-outputs-file }}
+        API_IMAGE: ${{ inputs.api-image }}
+        FRONTEND_IMAGE: ${{ inputs.frontend-image }}
+        API_DIGEST: ${{ inputs.api-digest }}
+        FRONTEND_DIGEST: ${{ inputs.frontend-digest }}
+        API_NAME: ${{ inputs.api-name }}
+        FRONTEND_NAME: ${{ inputs.frontend-name }}
+        RESOURCE_GROUP: ${{ inputs.resource-group }}
+      with:
+        github-token: ${{ inputs.gh-token }}
+        script: |
+          const fs = require('fs');
+
+          try {
+            // Extract deployment outputs from bicep
+            const fileContents = fs.readFileSync(process.env.DEPLOYMENT_OUTPUTS_FILE);
+
+            core.startGroup('Raw deployment outputs');
+            core.info(fileContents.toString());
+            core.endGroup();
+
+            const data = JSON.parse(fileContents);
+            core.startGroup('Parsed Deployment Outputs');
+            core.info(JSON.stringify(data, null, 2));
+            core.endGroup();
+
+            const apiUrl = data.apiUrl?.value || '';
+            const frontendUrl = data.frontendUrl?.value || '';
+            const apiAppName = data.apiAppName?.value || '';
+            const frontendAppName = data.frontendAppName?.value || '';
+            const location = data.location?.value || '';
+
+            core.setOutput('api_url', apiUrl);
+            core.setOutput('frontend_url', frontendUrl);
+            core.setOutput('api_app_name', apiAppName);
+            core.setOutput('frontend_app_name', frontendAppName);
+            core.setOutput('location', location);
+
+            core.info(`API URL: ${apiUrl}`);
+            core.info(`Frontend URL: ${frontendUrl}`);
+            core.info(`API App Name: ${apiAppName}`);
+            core.info(`Frontend App Name: ${frontendAppName}`);
+            core.info(`Location: ${location}`);
+
+            // Get metadata from environment
+            const apiImage = process.env.API_IMAGE;
+            const frontendImage = process.env.FRONTEND_IMAGE;
+            const apiDigest = process.env.API_DIGEST;
+            const frontendDigest = process.env.FRONTEND_DIGEST;
+            const apiName = process.env.API_NAME;
+            const frontendName = process.env.FRONTEND_NAME;
+            const resourceGroup = process.env.RESOURCE_GROUP;
+
+            // Generate Actions Summary
+            await core.summary
+              .addHeading('🚢 Deployment Summary', 2)
+              .addRaw('\n')
+              .addHeading('🔗 Deployed Applications', 3)
+              .addList([
+                `API: <a href="${apiUrl}">${apiUrl}</a>`,
+                `Frontend: <a href="${frontendUrl}">${frontendUrl}</a>`
+              ])
+              .addRaw('\n')
+              .addHeading('📦 Deployment Details', 3)
+              .addTable([
+                [
+                  { data: 'Service', header: true },
+                  { data: 'Container App', header: true },
+                  { data: 'Package', header: true },
+                  { data: 'Image', header: true },
+                  { data: 'Digest', header: true }
+                ],
+                [
+                  '🔌 API',
+                  apiAppName,
+                  apiName,
+                  `<code>${apiImage}</code>`,
+                  `<code>${apiDigest}...</code>`
+                ],
+                [
+                  '🖥️ Frontend',
+                  frontendAppName,
+                  frontendName,
+                  `<code>${frontendImage}</code>`,
+                  `<code>${frontendDigest}...</code>`
+                ]
+              ])
+              .addRaw('\n')
+              .addHeading('☁️ Infrastructure', 3)
+              .addTable([
+                [
+                  { data: 'Property', header: true },
+                  { data: 'Value', header: true }
+                ],
+                ['Location', location],
+                ['Resource Group', resourceGroup],
+                ['Environment', 'production']
+              ])
+              .write();
+            
+            core.info('✅ Deployment summary generated');
+
+          } catch (err) {
+            core.setFailed(`Failed to process deployment outputs: ${err.message}`);
+          }
