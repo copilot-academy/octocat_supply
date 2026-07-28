@@ -46,5 +46,15 @@ Do not inline full API route or component files in review feedback unless absolu
 ## Tone & Feedback Style
 Be concise, actionable, and cite a rationale ("because" clause) for non-trivial recommendations. Offer one preferred solution; optionally a lightweight alternative.
 
+## REST API Guidelines
+
+For all REST API endpoints:
+
+* Use descriptive naming following RESTful conventions
+* Add Swagger/OpenAPI documentation
+* Implement TAO observability (logging, metrics, tracing)
+  - Assume TAO package is already installed
+  - Follow patterns in existing routes
+
 ---
 If new subsystems are added (e.g., `mobile/`, `worker/`), create a new `*.instructions.md` with `applyTo` globs instead of bloating this file.

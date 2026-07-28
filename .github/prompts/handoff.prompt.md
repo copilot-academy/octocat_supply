@@ -1,43 +1,49 @@
----
-description: 'Scans the current chat history, strips noise, and writes a concise handoff.md for the next developer.'
-tools: ['search', 'web/githubRepo', 'read', 'azure-mcp-server/search', 'github/*', 'github-remote/*']
----
-
-<!--
-INTERNAL THOUGHTS – not shown to the user.
-1. Parse the entire chat transcript supplied by VS Code.
-2. Extract SIGNAL → decisions, requirements, designs, pending work.
-   Discard NOISE → debug logs, obsolete ideas, tool calls, transient snippets.
-3. Categorize findings into:
-   A. Codebase Overview
-   B. In-Flight Work
-   C. Known Issues / Risks
-   D. Next Actions
-   E. Resource Links
-4. If there’s no meaningful context, create a stub handoff.md that says so.
-5. Write **only** the file below and nothing else in chat.
--->
-
-```markdown filename="handoff.md"
 # Handoff Document
 
 **Project Goal**  
-${input:goal:'⚠️ No goal provided – edit the prompt or pass a goal when running.'}
+Add a user profile page to the OctoCAT Supply Chain Management Application with inline display-name editing and profile picture upload capability.
 
 ## 1 Codebase Overview
-<!-- Key architecture & modules, ≤ 10 lines -->
+
+TypeScript monorepo: `api/` (Express + SQLite, repository pattern, Swagger) and `frontend/` (React + Vite + Tailwind). Auth is currently **client-side only** — no `users` table, no API auth routes. Login checks `email.endsWith('@github.com')` for admin; no password validation. Frontend routing via React Router in `App.tsx`; dark-mode Tailwind classes via `useTheme()`. API follows a strict route → repository → SQLite pattern with `objectToCamelCase` mapping and custom error types (`NotFoundError`, `ValidationError`, etc.).
 
 ## 2 In-Flight Work
-<!-- Bullet list of tasks currently underway -->
+
+- **Plan designed, implementation not yet started.**
+- No code has been written or modified — all three phases (DB, API, Frontend) remain pending.
 
 ## 3 Known Issues / Risks
-<!-- Bugs, blockers, design concerns -->
+
+- `AuthContext` exposes no `user` object today — extending it to store `{ id, email, displayName, avatarPath }` is a breaking change to every `useAuth()` consumer.
+- `multer` is not installed — must be added to `api/package.json` before file-upload routes compile.
+- `api/data/uploads/` must exist on disk before startup; missing directory crashes multer. Add a `mkdir -p` guard in `init-db.ts` or the Dockerfile.
+- No auth middleware — any caller with a known user `id` can update any profile. Acceptable for demo; revisit if security requirements change.
+- `express.static('data/uploads')` is relative to the process CWD — verify it resolves correctly inside the Docker container (`api/Dockerfile` sets `WORKDIR`).
 
 ## 4 Next Actions (Immediate TODOs)
-<!-- Checklist tasks. Prefix each with “[ ]”. -->
+
+- [ ] **Phase 1 — DB**: Create `api/database/migrations/003_add_users.sql` — `users` table (`id`, `email UNIQUE`, `display_name`, `avatar_path`, `created_at`, `updated_at`) + unique index on `email`.
+- [ ] **Phase 2 — Model**: Create `api/src/models/user.ts` — `User` interface + embedded `@swagger` schema (follow `supplier.ts` pattern).
+- [ ] **Phase 2 — Dependency**: Add `multer` + `@types/multer` to `api/package.json`.
+- [ ] **Phase 2 — Repo**: Create `api/src/repositories/usersRepo.ts` — `UsersRepository` with `findById`, `findByEmail`, `findOrCreate(email)` (INSERT OR IGNORE + SELECT), `update`, `updateAvatarPath`.
+- [ ] **Phase 2 — Auth route**: Create `api/src/routes/auth.ts` — `POST /api/auth/login` accepts `{ email }`, calls `findOrCreate`, returns user object. Add Swagger docs.
+- [ ] **Phase 2 — User route**: Create `api/src/routes/user.ts` — `GET /api/users/:id`, `PUT /api/users/:id` (update `displayName`), `POST /api/users/:id/avatar` (multer → `data/uploads/`). Add Swagger docs.
+- [ ] **Phase 2 — index.ts**: Mount `authRoutes` at `/api/auth`, `userRoutes` at `/api/users`; add `express.static` at `/uploads` → `data/uploads/`.
+- [ ] **Phase 3 — API config**: Add `auth: '/api/auth/login'` and `users: '/api/users'` to `frontend/src/api/config.ts`.
+- [ ] **Phase 3 — AuthContext**: Extend `AuthContext.tsx` — add `User` interface, expose `user: User | null`, call login API in `login()`, persist to localStorage, clear on `logout()`.
+- [ ] **Phase 3 — ProfilePage**: Create `frontend/src/components/profile/ProfilePage.tsx` — avatar display (initials circle fallback), file input → avatar upload, display-name edit form, read-only email. Use `useAuth()` + `useTheme()`.
+- [ ] **Phase 3 — Routing**: Add `<Route path="/profile" element={<ProfilePage />} />` to `frontend/src/App.tsx`.
+- [ ] **Phase 3 — Nav**: Add "Profile" link in `Navigation.tsx` when logged in; show `user.displayName` instead of "Welcome!".
+- [ ] **Verification**: `npm run build --workspace=api` and `--workspace=frontend` — no TypeScript errors.
 
 ## 5 Documentation & Resources
-<!-- Links to specs, diagrams, prior PRs, etc. -->
+
+- Reference — API route + Swagger: [api/src/routes/supplier.ts](api/src/routes/supplier.ts)
+- Reference — Repository class: [api/src/repositories/suppliersRepo.ts](api/src/repositories/suppliersRepo.ts)
+- Reference — Model + schema: [api/src/models/supplier.ts](api/src/models/supplier.ts)
+- Reference — Frontend form + dark mode: [frontend/src/components/entity/product/ProductForm.tsx](frontend/src/components/entity/product/ProductForm.tsx)
+- Reference — Auth context: [frontend/src/context/AuthContext.tsx](frontend/src/context/AuthContext.tsx)
+- Architecture: [docs/architecture.md](docs/architecture.md), [docs/sqlite-integration.md](docs/sqlite-integration.md)
 
 ---
 _Generated by Copilot Coding Agent – last context message processed automatically._

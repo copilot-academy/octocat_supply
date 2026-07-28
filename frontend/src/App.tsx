@@ -9,6 +9,10 @@ import { AuthProvider } from './context/AuthContext';
 import { ThemeProvider } from './context/ThemeContext';
 import AdminProducts from './components/admin/AdminProducts';
 import { useTheme } from './context/ThemeContext';
+import { CartProvider } from './context/CartContext';
+import CartPage from './components/cart/CartPage';
+import { CookieConsentProvider } from './context/CookieConsentContext';
+import CookieBanner from './components/CookieBanner';
 
 // Wrapper component to apply theme classes
 function ThemedApp() {
@@ -25,11 +29,13 @@ function ThemedApp() {
             <Route path="/" element={<Welcome />} />
             <Route path="/about" element={<About />} />
             <Route path="/products" element={<Products />} />
+            <Route path="/cart" element={<CartPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/admin/products" element={<AdminProducts />} />
           </Routes>
         </main>
         <Footer />
+        <CookieBanner />
       </div>
     </Router>
   );
@@ -38,9 +44,13 @@ function ThemedApp() {
 function App() {
   return (
     <AuthProvider>
-      <ThemeProvider>
-        <ThemedApp />
-      </ThemeProvider>
+      <CookieConsentProvider>
+      <CartProvider>
+        <ThemeProvider>
+          <ThemedApp />
+        </ThemeProvider>
+      </CartProvider>
+      </CookieConsentProvider>
     </AuthProvider>
   );
 }
