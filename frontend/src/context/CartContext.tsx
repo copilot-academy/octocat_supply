@@ -1,8 +1,8 @@
 import { createContext, useContext, useEffect, useMemo, useReducer, type ReactNode } from 'react';
 
 const CART_STORAGE_KEY = 'octocat.cart.v1';
-const DEFAULT_DISCOUNT_RATE = 0.05;
-const DEFAULT_SHIPPING_FEE = 10;
+const FREE_SHIPPING_THRESHOLD = 100;
+const SHIPPING_FEE = 25;
 
 export interface CartProduct {
   productId: number;
@@ -31,7 +31,6 @@ interface CartContextValue {
   items: CartItem[];
   itemCount: number;
   subtotal: number;
-  discountAmount: number;
   shippingFee: number;
   total: number;
   addItem: (product: CartProduct, quantity: number) => void;
@@ -139,16 +138,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       const effectivePrice = item.discount ? item.price * (1 - item.discount) : item.price;
       return acc + effectivePrice * item.quantity;
     }, 0);
-    const discountAmount = subtotal * DEFAULT_DISCOUNT_RATE;
-    const shippingFee = state.items.length > 0 ? DEFAULT_SHIPPING_FEE : 0;
-    const total = subtotal - discountAmount + shippingFee;
+    const shippingFee = state.items.length > 0 && subtotal < FREE_SHIPPING_THRESHOLD ? SHIPPING_FEE : 0;
+    const total = subtotal + shippingFee;
     const itemCount = state.items.reduce((acc, item) => acc + item.quantity, 0);
 
     return {
       items: state.items,
       itemCount,
       subtotal,
-      discountAmount,
       shippingFee,
       total,
       addItem: (product: CartProduct, quantity: number) =>

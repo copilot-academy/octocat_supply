@@ -26,8 +26,7 @@ export default function Products() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showModal, setShowModal] = useState(false);
-  const [cartStatus, setCartStatus] = useState('');
-  const { data: products, isLoading, error } = useQuery('products', fetchProducts);
+  const { data: products, isLoading, error, refetch, isFetching } = useQuery('products', fetchProducts);
   const { darkMode } = useTheme();
   const { items, addItem, removeItem, setItemQuantity } = useCart();
 
@@ -67,18 +66,15 @@ export default function Products() {
         },
         1,
       );
-      setCartStatus(`${nextQuantity} x ${product.name} in cart.`);
       return;
     }
 
     if (nextQuantity < 1) {
       removeItem(product.productId);
-      setCartStatus(`${product.name} removed from cart.`);
       return;
     }
 
     setItemQuantity(product.productId, nextQuantity);
-    setCartStatus(`${nextQuantity} x ${product.name} in cart.`);
   };
 
   const handleProductClick = (product: Product) => {
@@ -101,12 +97,27 @@ export default function Products() {
   }
 
   if (error) {
+    const isNetworkError = axios.isAxiosError(error) && !error.response;
     return (
       <div
         className={`min-h-screen ${darkMode ? 'bg-dark' : 'bg-gray-100'} pt-20 px-4 transition-colors duration-300`}
       >
         <div className="max-w-7xl mx-auto">
-          <div className="text-red-500 text-center">Failed to fetch products</div>
+          <div className="text-center space-y-4">
+            <div className="text-red-500">
+              {isNetworkError
+                ? 'Network error while loading products. Please check your connection.'
+                : 'Failed to fetch products'}
+            </div>
+            <button
+              type="button"
+              onClick={() => refetch()}
+              disabled={isFetching}
+              className="bg-primary hover:bg-accent disabled:opacity-50 disabled:cursor-not-allowed text-white px-4 py-2 rounded-md transition-colors"
+            >
+              {isFetching ? 'Retrying...' : 'Retry'}
+            </button>
+          </div>
         </div>
       </div>
     );
@@ -123,16 +134,6 @@ export default function Products() {
           >
             Products
           </h1>
-          {cartStatus && (
-            <p
-              className={`${darkMode ? 'text-primary' : 'text-green-700'} text-sm`}
-              role="status"
-              aria-live="polite"
-            >
-              {cartStatus}
-            </p>
-          )}
-
           <div className="relative">
             <input
               type="text"
