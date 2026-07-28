@@ -188,7 +188,7 @@ export default function CartPage() {
                 </div>
               </div>
               <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} mt-3 text-xs`}>
-                Free shipping on orders over $100, otherwise $25 shipping.
+                Free shipping on orders of $100 or more, otherwise $25 shipping.
               </p>
 
               <div
