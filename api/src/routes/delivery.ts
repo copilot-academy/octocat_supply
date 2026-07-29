@@ -147,7 +147,7 @@
 
 import express from 'express';
 import { Delivery } from '../models/delivery';
-import { exec } from 'child_process';
+import { execFile } from 'child_process';
 import { getDeliveriesRepository } from '../repositories/deliveriesRepo';
 import { NotFoundError } from '../utils/errors';
 
@@ -202,7 +202,7 @@ router.put('/:id/status', async (req, res, next) => {
       const updatedDelivery = await repo.updateStatus(parseInt(req.params.id), status);
 
       if (deliveryPartner) {
-        exec(`notify ${deliveryPartner}`, (error, stdout) => {
+        execFile('notify', [String(deliveryPartner)], (error, stdout) => {
           if (error) {
             console.error(`Error executing command: ${error}`);
             return res.status(500).json({ error: error.message });
