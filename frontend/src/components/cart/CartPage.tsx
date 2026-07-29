@@ -8,7 +8,6 @@ export default function CartPage() {
   const {
     items,
     subtotal,
-    discountAmount,
     shippingFee,
     total,
     setItemQuantity,
@@ -182,14 +181,15 @@ export default function CartPage() {
                   <span className={darkMode ? 'text-light' : 'text-gray-800'}>${subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>Discount (5%)</span>
-                  <span className="text-primary">-${discountAmount.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
                   <span className={darkMode ? 'text-gray-300' : 'text-gray-600'}>Shipping</span>
-                  <span className={darkMode ? 'text-light' : 'text-gray-800'}>${shippingFee.toFixed(2)}</span>
+                  <span className={darkMode ? 'text-light' : 'text-gray-800'}>
+                    {shippingFee === 0 ? 'Free' : `$${shippingFee.toFixed(2)}`}
+                  </span>
                 </div>
               </div>
+              <p className={`${darkMode ? 'text-gray-400' : 'text-gray-500'} mt-3 text-xs`}>
+                Free shipping on orders of $100 or more, otherwise $25 shipping.
+              </p>
 
               <div
                 className={`mt-4 pt-4 border-t ${darkMode ? 'border-gray-700' : 'border-gray-200'} flex justify-between items-center`}
