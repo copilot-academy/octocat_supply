@@ -549,6 +549,27 @@ jobs:
           EXPR_GITHUB_WORKSPACE: ${{ github.workspace }}
         name: Configure Playwright CLI launch options
         run: "mkdir -p \"$EXPR_GITHUB_WORKSPACE/.playwright\"\ncat > \"$EXPR_GITHUB_WORKSPACE/.playwright/cli.config.json\" <<'EOF'\n{\n  \"browser\": {\n    \"launchOptions\": {\n      \"chromiumSandbox\": false,\n      \"args\": [\"--no-sandbox\", \"--disable-setuid-sandbox\"]\n    }\n  }\n}\nEOF"
+      - env:
+          EXPR_GITHUB_WORKSPACE: ${{ github.workspace }}
+        name: Start frontend preview server
+        run: |
+          mkdir -p /tmp/gh-aw
+          cd "$EXPR_GITHUB_WORKSPACE/frontend"
+          nohup npm run preview -- --host 0.0.0.0 --port 5137 > /tmp/gh-aw/frontend-preview.log 2>&1 &
+      - name: Wait for frontend preview server
+        run: |
+          MAX_WAIT=120
+          WAITED=0
+          until curl -sf http://localhost:5137/ > /dev/null 2>&1; do
+            WAITED=$((WAITED + 3))
+            if [ "$WAITED" -ge "$MAX_WAIT" ]; then
+              echo "Server log:" && cat /tmp/gh-aw/frontend-preview.log
+              echo "Preview server failed to start after ${MAX_WAIT}s."
+              exit 1
+            fi
+            sleep 3
+          done
+          echo "Frontend preview is ready."
 
       - name: Download container images
         run: bash "${RUNNER_TEMP}/gh-aw/actions/download_docker_images.sh" ghcr.io/github/gh-aw-firewall/agent:0.27.42@sha256:26a8af4e5566485b02f52af59ee03803ae798271a9619d4767e94d07806deb9b ghcr.io/github/gh-aw-firewall/api-proxy:0.27.42@sha256:944f2686c9ab9bec338fd14b662461662f77cd12cd0ea8a3e7cb8c0987cd1607 ghcr.io/github/gh-aw-firewall/cli-proxy:0.27.42@sha256:da006bf96d2d246dd269d57b233c1798d2ad63d6cd64ca02f7bf71045028781f ghcr.io/github/gh-aw-firewall/squid:0.27.42@sha256:42dfeb649c680a8558cd5423dbc530b653a69413e35ffbe5e71da5d48c94bdf0 ghcr.io/github/gh-aw-mcpg:v0.4.6@sha256:fecabec51bbc41f2ad61076d6bcd9a36ef23b142e672a444e054d37fc29de93c ghcr.io/github/gh-aw-node@sha256:a8082161d7dceda14b68f32eb39d0eaa96b825d07f5895b096afab9d9e0c7748 ghcr.io/github/github-mcp-server:v1.7.0@sha256:c491ffdf6f4c85cb5397021bc655edb8ab825c6f5f568e7597d77a1bd7c4d308
