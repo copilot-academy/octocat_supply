@@ -73,6 +73,27 @@ pre-agent-steps:
         }
       }
       EOF
+  - name: Start frontend preview server
+    env:
+      EXPR_GITHUB_WORKSPACE: ${{ github.workspace }}
+    run: |
+      mkdir -p /tmp/gh-aw
+      cd "$EXPR_GITHUB_WORKSPACE/frontend"
+      nohup npm run preview -- --host 0.0.0.0 --port 5137 > /tmp/gh-aw/frontend-preview.log 2>&1 &
+  - name: Wait for frontend preview server
+    run: |
+      MAX_WAIT=120
+      WAITED=0
+      until curl -sf http://localhost:5137/ > /dev/null 2>&1; do
+        WAITED=$((WAITED + 3))
+        if [ "$WAITED" -ge "$MAX_WAIT" ]; then
+          echo "Server log:" && cat /tmp/gh-aw/frontend-preview.log
+          echo "Preview server failed to start after ${MAX_WAIT}s."
+          exit 1
+        fi
+        sleep 3
+      done
+      echo "Frontend preview is ready."
 ---
 
 # Multi-Device Website Testing
@@ -90,40 +111,20 @@ You are a website testing specialist. Test this repository's frontend website ac
 
 ## Task
 
-1. Start the frontend preview server:
-   ```bash
-   cd "${{ github.workspace }}/frontend"
-   LOG_FILE="/tmp/gh-aw/agent/frontend-preview.log"
-   nohup npm run preview -- --host 0.0.0.0 --port 5137 > "$LOG_FILE" 2>&1 &
-   echo "Server PID: $!, log: $LOG_FILE"
-   ```
-2. Wait for server readiness:
-   ```bash
-   LOG_FILE="/tmp/gh-aw/agent/frontend-preview.log"
-   MAX_WAIT=120
-   WAITED=0
-   until curl -sf http://localhost:5137/ > /dev/null 2>&1; do
-     WAITED=$((WAITED + 3))
-     if [ $WAITED -ge $MAX_WAIT ]; then
-       echo "Server log:" && cat "$LOG_FILE"
-       echo "Preview server failed to start after ${MAX_WAIT}s."
-       exit 1
-     fi
-     sleep 3
-   done
-   echo "Frontend preview is ready."
-   ```
-3. Use `playwright-cli` with config `${{ github.workspace }}/.playwright/cli.config.json`.
-4. Test requested device categories:
+The frontend preview server is already running and healthy at `http://localhost:5137/`.
+Do not rebuild or restart it unless you determine the site is unavailable, and if infrastructure prevents testing, use `noop` with a concise blocked reason.
+
+1. Use `playwright-cli` with config `${{ github.workspace }}/.playwright/cli.config.json`.
+2. Test requested device categories:
    - Mobile: iPhone 12 (390x844), Pixel 5 (393x851), Galaxy S21 (360x800)
    - Tablet: iPad (768x1024), iPad Pro 11 (834x1194)
    - Desktop: 1366x768, 1920x1080, 2560x1440
-5. For each tested viewport, verify:
+3. For each tested viewport, verify:
    - Landing page loads without errors.
    - Main navigation and key links/buttons are usable.
    - No major overflow, truncation, or layout breakage.
    - No blocking console errors.
-6. Capture concise findings by severity (critical/warning/passed).
+4. Capture concise findings by severity (critical/warning/passed).
 
 ## Reporting
 
