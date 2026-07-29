@@ -1,8 +1,11 @@
 import React from 'react';
+import { Link } from 'react-router-dom';
 import { useTheme } from '../context/ThemeContext';
+import { useCookieConsent } from '../context/CookieConsentContext';
 
 const Footer: React.FC = () => {
   const { darkMode } = useTheme();
+  const { reopenBanner } = useCookieConsent();
 
   return (
     <footer
@@ -25,9 +28,9 @@ const Footer: React.FC = () => {
             <h2 className="font-bold text-xl mb-4 text-primary">Account</h2>
             <ul className="space-y-2">
               <li>
-                <a href="#" className="hover:text-primary">
+                <Link to="/cart" className="hover:text-primary">
                   My Cart
-                </a>
+                </Link>
               </li>
               <li>
                 <a href="#" className="hover:text-primary">
@@ -80,6 +83,15 @@ const Footer: React.FC = () => {
                 <a href="#" className="hover:text-primary">
                   Privacy Policy
                 </a>
+              </li>
+              <li>
+                <button
+                  type="button"
+                  onClick={reopenBanner}
+                  className="hover:text-primary text-left"
+                >
+                  Cookie Settings
+                </button>
               </li>
             </ul>
           </div>

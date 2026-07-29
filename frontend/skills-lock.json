@@ -1,0 +1,11 @@
+{
+  "version": 1,
+  "skills": {
+    "compliance": {
+      "source": "copilot-academy/od-octocat-supply-compliance-docs",
+      "sourceType": "github",
+      "skillPath": "skills/compliance/SKILL.md",
+      "computedHash": "833b0f9c9ee88309ac28c43ae626a378c79f4d781ff23f2aadd36cb10a9a845d"
+    }
+  }
+}
