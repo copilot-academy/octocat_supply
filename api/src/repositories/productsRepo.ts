@@ -131,7 +131,8 @@ export class ProductsRepository {
   async findByName(name: string): Promise<Product[]> {
     try {
       const rows = await this.db.all<DatabaseRow>(
-        `SELECT * FROM products WHERE name LIKE '%${name}%' ORDER BY name`,
+        'SELECT * FROM products WHERE name LIKE ? ORDER BY name',
+        [`%${name}%`],
       );
       return mapDatabaseRows<Product>(rows);
     } catch (error) {
