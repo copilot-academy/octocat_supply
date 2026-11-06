@@ -1,5 +1,18 @@
 # React + TypeScript + Vite
 
+## Shopping cart
+
+Select a quantity in Products and choose **Add to Cart**. The navbar badge counts
+total units, including repeated additions of the same product. Open `/cart` to
+remove products or edit quantities and choose **Update Cart** to apply changes.
+Cart state is shared across navigation; reloading the page starts a new cart.
+
+The cart follows `docs/design/cart.png` with a responsive, horizontally scrollable
+product table and order summary in both themes. Unit prices retain catalog
+discounts. Totals are calculated in cents, with an additional fixed 5% discount
+and $10 shipping for nonempty carts. No coupon is required. Checkout is explicitly
+unavailable in this demo; no order or payment is submitted.
+
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
 Currently, two official plugins are available:
